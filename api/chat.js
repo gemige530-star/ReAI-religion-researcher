@@ -13,7 +13,7 @@ export default async function handler(req) {
     const { message } = await req.json();
 
     const completion = await client.chat.completions.create({
-      model: "gpt-5"
+      model: "gpt-5",
       messages: [
         { role: "system", content: "You are a helpful assistant focused on digital religion research." },
         { role: "user", content: message },
