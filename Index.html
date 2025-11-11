@@ -127,10 +127,19 @@
         <span class="icon">➜</span>
       </button>
     </div>
+
+    <!-- ✅ 文件上传区域 -->
+    <div class="file-upload-section">
+      <label for="file-upload" class="file-label">Upload File</label>
+      <input type="file" id="file-upload" />
+      <div id="file-name" class="file-name">No file selected</div>
+    </div>
+
     <div id="response"></div>
   </div>
 
   <script>
+    // 发送问题
     function sendQuestion() {
       const input = document.getElementById("question");
       const box = document.getElementById("response");
@@ -140,12 +149,26 @@
       input.value = "";
     }
 
+    // 回车发送
     document.getElementById("question").addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
         sendQuestion();
       }
     });
+
+    // ✅ 文件上传交互
+    const fileInput = document.getElementById("file-upload");
+    const fileName = document.getElementById("file-name");
+
+    fileInput.addEventListener("change", function () {
+      if (fileInput.files.length > 0) {
+        fileName.textContent = "Selected: " + fileInput.files[0].name;
+      } else {
+        fileName.textContent = "No file selected";
+      }
+    });
   </script>
 </body>
+
 </html>
