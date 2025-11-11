@@ -1,9 +1,9 @@
 {
-  "name": "reai-religion-researcher",
+  "name": "re-ai-religion-researcher",
   "version": "1.0.0",
+  "main": "api/chat.js",
   "type": "module",
   "dependencies": {
-    "openai": "^4.0.0"
+    "openai": "^4.73.0"
   }
 }
-
