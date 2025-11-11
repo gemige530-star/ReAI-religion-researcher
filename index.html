@@ -139,35 +139,50 @@
   </div>
 
   <script>
-    // 发送问题
-    function sendQuestion() {
-      const input = document.getElementById("question");
-      const box = document.getElementById("response");
-      const q = input.value.trim();
-      if (!q) return;
-      box.textContent = "Q: " + q + "\n\nAI: ";
-      input.value = "";
+  async function sendQuestion() {
+    const input = document.getElementById("question");
+    const box = document.getElementById("response");
+    const q = input.value.trim();
+    if (!q) return;
+
+    box.textContent = "Q: " + q + "\n\nAI: (thinking...)";
+    input.value = "";
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: q }),
+      });
+
+      if (!res.ok) {
+        box.textContent += `\n\n[Error ${res.status}]`;
+        return;
+      }
+
+      const data = await res.json();
+      box.textContent = "Q: " + q + "\n\nAI: " + (data.reply || "(no response)");
+    } catch (err) {
+      box.textContent += `\n\n[Network error: ${err.message}]`;
     }
+  }
 
-    // 回车发送
-    document.getElementById("question").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        sendQuestion();
-      }
-    });
+  // 回车键发送
+  document.getElementById("question").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendQuestion();
+    }
+  });
 
-    // ✅ 文件上传交互
-    const fileInput = document.getElementById("file-upload");
-    const fileName = document.getElementById("file-name");
-
-    fileInput.addEventListener("change", function () {
-      if (fileInput.files.length > 0) {
-        fileName.textContent = "Selected: " + fileInput.files[0].name;
-      } else {
-        fileName.textContent = "No file selected";
-      }
-    });
-  </script>
+  // 文件上传交互
+  const fileInput = document.getElementById("file-upload");
+  const fileName = document.getElementById("file-name");
+  fileInput.addEventListener("change", function () {
+    fileName.textContent = fileInput.files.length > 0
+      ? "Selected: " + fileInput.files[0].name
+      : "No file selected";
+  });
+</script>
 </body>
 </html>
