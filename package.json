@@ -5,5 +5,11 @@
   "type": "module",
   "dependencies": {
     "openai": "^4.73.0"
+  },
+  "scripts": {
+    "build": "echo \"no build step\""
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
