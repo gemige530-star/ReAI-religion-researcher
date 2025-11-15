@@ -5,17 +5,26 @@ const client = new OpenAI({
 });
 
 export const config = {
-  // Vercel 现在支持的值： "nodejs" | "edge" | "experimental-edge"
+  // 这行是这次部署失败的根源，必须用 "nodejs"
   runtime: "nodejs",
 };
 
 export default async function handler(req, res) {
+  // 只允许 POST
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // 环境变量没配好时，直接返回明确错误
+  if (!process.env.OPENAI_API_KEY) {
+    return res
+      .status(500)
+      .json({ error: "OPENAI_API_KEY is not set in Vercel environment" });
+  }
+
   try {
+    // 读取原始 body
     let body = "";
     await new Promise((resolve, reject) => {
       req.on("data", (chunk) => {
@@ -27,17 +36,17 @@ export default async function handler(req, res) {
 
     const { message } = JSON.parse(body || "{}");
 
-    if (!message) {
-      return res.status(400).json({ error: "Missing 'message' in request body" });
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Missing or invalid 'message' in request body" });
     }
 
+    // 使用 chat.completions.create
     const completion = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content:
-            "You are a helpful assistant for AI and religion research.",
+          content: "You are a helpful assistant for AI and religion research.",
         },
         { role: "user", content: message },
       ],
