@@ -5,7 +5,7 @@ const client = new OpenAI({
 });
 
 export const config = {
-  runtime: "nodejs18.x", // ✅ 修正 runtime
+  runtime: "nodejs18.x",
 };
 
 export default async function handler(req, res) {
@@ -22,15 +22,19 @@ export default async function handler(req, res) {
 
     const { message } = JSON.parse(body || "{}");
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o", // ✅ 修正模型名
-      messages: [
+    const completion = await client.responses.create({
+      model: "gpt-4o",
+      input: [
         { role: "system", content: "You are a helpful assistant for AI and religion research." },
-        { role: "user", content: message },
-      ],
+        { role: "user", content: message }
+      ]
     });
 
-    const text = completion.choices?.[0]?.message?.content || "No reply";
+    const text =
+      completion.output_text ||
+      completion.output?.[0]?.content?.[0]?.text ||
+      "No reply";
+
     res.status(200).json({ reply: text });
   } catch (err) {
     console.error("API error:", err);
