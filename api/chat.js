@@ -1,10 +1,7 @@
 import OpenAI from "openai";
 
 export const config = {
-  runtime: "nodejs",        // 必须是 nodejs（不是 nodejs18.x）
-  api: {
-    bodyParser: true        // 让 req.body 正常工作
-  }
+  runtime: "nodejs", 
 };
 
 const client = new OpenAI({
@@ -12,7 +9,7 @@ const client = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  // ------- CORS --------
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -26,15 +23,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    // --------- 取 message ---------
-    const body = req.body ?? {};
-    const message = body.message;
+    // -------- 手动解析 JSON（保证100%成功）--------
+    let body = "";
+    await new Promise(resolve => {
+      req.on("data", chunk => (body += chunk));
+      req.on("end", resolve);
+    });
+
+    const data = body ? JSON.parse(body) : {};
+    const message = data.message;
 
     if (!message) {
       return res.status(400).json({ error: "Missing message" });
     }
 
-    // --------- Assistants Threads ---------
+    // -------- Assistants Threads --------
     const thread = await client.beta.threads.create();
 
     await client.beta.threads.messages.create(thread.id, {
@@ -52,12 +55,11 @@ export default async function handler(req, res) {
       msgs.data.filter(m => m.role === "assistant").pop();
 
     const reply =
-      assistantMsg?.content?.[0]?.text?.value ||
-      "No reply.";
+      assistantMsg?.content?.[0]?.text?.value || "No reply.";
 
     return res.status(200).json({ reply });
   } catch (err) {
     console.error("SERVER ERROR:", err);
-    return res.status(500).json({ error: "Server internal error" });
+    return res.status(500).json({ error: "Server internal error", detail: err.message });
   }
 }
