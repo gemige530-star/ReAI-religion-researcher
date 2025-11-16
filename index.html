@@ -2,50 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title> ReAI Researcher</title>
+  <title>Digital Religion Researcher</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
     * {
       box-sizing: border-box;
     }
-    body {
+
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: linear-gradient(180deg, #f8fafc, #e0e7ff);
       color: #111827;
+    }
+
+    body {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      text-align: center;
     }
-    h1 
-      margin-top: 80px;
+
+    h1 {
+      margin-top: 60px;
       margin-bottom: 12px;
       font-size: 32px;
       font-weight: 700;
-      letter-spacing: 0.02em;
       color: #1e293b;
-    }
-    .subtitle {
-      margin-bottom: 40px;
-      font-size: 16px;
-      color: #475569;
+      text-align: center;
     }
 
-    /* 保留你的聊天容器外观 */
-    .chat-container {
+    .subtitle {
+      margin-bottom: 28px;
+      font-size: 16px;
+      color: #475569;
+      text-align: center;
+    }
+
+    /* 整个聊天区域自动推到底部 */
+    .chat-wrapper {
       width: 100%;
       max-width: 720px;
+      margin-top: auto;
       padding: 20px;
+    }
+
+    .chat-container {
+      width: 100%;
       background: #ffffff;
       border-radius: 18px;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
       display: flex;
       flex-direction: column;
+      padding: 20px;
       gap: 16px;
     }
 
@@ -57,10 +68,9 @@
       text-align: left;
     }
 
-    /* ChatGPT 风格聊天框 */
     .chat-log {
       width: 100%;
-      max-height: 400px;
+      height: 360px;
       overflow-y: auto;
       background: #f8fafb;
       padding: 14px;
@@ -71,6 +81,7 @@
       gap: 14px;
       text-align: left;
     }
+
     .msg {
       padding: 10px 12px;
       border-radius: 12px;
@@ -79,11 +90,13 @@
       font-size: 14px;
       line-height: 1.5;
     }
+
     .msg.user {
       align-self: flex-end;
       background: #111827;
       color: white;
     }
+
     .msg.ai {
       align-self: flex-start;
       background: #e5e7eb;
@@ -95,21 +108,23 @@
       align-items: center;
       gap: 10px;
     }
+
     #question {
       flex: 1;
       padding: 12px 14px;
       border-radius: 12px;
       border: 1px solid #e5e7eb;
+      background: #f9fafb;
       font-size: 15px;
       outline: none;
-      background: #f9fafb;
-      transition: all 0.18s ease;
     }
+
     #question:focus {
       border-color: #111827;
       background: #ffffff;
       box-shadow: 0 0 0 2px rgba(17,24,39,0.06);
     }
+
     #send-btn {
       padding: 11px 18px;
       border: none;
@@ -122,24 +137,24 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.18s ease;
-      white-space: nowrap;
     }
+
     #send-btn:hover {
       background: #1e293b;
       transform: translateY(-1px);
       box-shadow: 0 6px 16px rgba(15,23,42,0.18);
     }
 
-    /* 文件上传区域保持原样 */
     .file-upload-section {
       margin-top: 10px;
       text-align: left;
     }
+
     .file-label {
       font-size: 14px;
       color: #334155;
     }
+
     .file-name {
       margin-top: 6px;
       font-size: 13px;
@@ -149,84 +164,82 @@
 </head>
 
 <body>
+
   <h1>Digital Religion Researcher</h1>
   <div class="subtitle">An interactive interface for exploring questions about digital religion</div>
 
-  <div class="chat-container">
-    <div class="prompt-label">Conversation</div>
+  <div class="chat-wrapper">
+    <div class="chat-container">
+      <div class="prompt-label">Conversation</div>
 
-    <!-- ChatGPT 风格对话记录 -->
-    <div id="chat-log" class="chat-log"></div>
+      <div id="chat-log" class="chat-log"></div>
 
-    <!-- 输入栏 -->
-    <div class="input-row">
-      <input type="text" id="question" placeholder="Ask something about digital religion..." />
-      <button id="send-btn" onclick="sendQuestion()">
-        <span>Send</span>
-        <span class="icon">➜</span>
-      </button>
-    </div>
+      <div class="input-row">
+        <input id="question" type="text" placeholder="Ask something about digital religion..." />
+        <button id="send-btn" onclick="sendQuestion()">Send ➜</button>
+      </div>
 
-    <!-- 文件上传区（保留你的原样式） -->
-    <div class="file-upload-section">
-      <label for="file-upload" class="file-label">Upload File</label>
-      <input type="file" id="file-upload" />
-      <div id="file-name" class="file-name">No file selected</div>
+      <div class="file-upload-section">
+        <label for="file-upload" class="file-label">Upload File</label>
+        <input type="file" id="file-upload" />
+        <div id="file-name" class="file-name">No file selected</div>
+      </div>
     </div>
   </div>
 
-  <script>
-    const chatLog = document.getElementById("chat-log");
+<script>
+  const chatLog = document.getElementById("chat-log");
 
-    function addMessage(sender, text) {
-      const div = document.createElement("div");
-      div.classList.add("msg", sender);
-      div.textContent = text;
-      chatLog.appendChild(div);
-      chatLog.scrollTop = chatLog.scrollHeight;
+  function addMessage(sender, text) {
+    const msg = document.createElement("div");
+    msg.classList.add("msg", sender);
+    msg.textContent = text;
+    chatLog.appendChild(msg);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  async function sendQuestion() {
+    const input = document.getElementById("question");
+    const q = input.value.trim();
+    if (!q) return;
+
+    addMessage("user", q);
+    input.value = "";
+
+    addMessage("ai", "(thinking...)");
+    const thinking = chatLog.lastChild;
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: q }),
+      });
+
+      const data = await res.json();
+      thinking.textContent = data.reply || "(no response)";
+    } catch (e) {
+      thinking.textContent = "[Network error]";
     }
+  }
 
-    async function sendQuestion() {
-      const input = document.getElementById("question");
-      const q = input.value.trim();
-      if (!q) return;
-
-      addMessage("user", q);
-      input.value = "";
-
-      addMessage("ai", "(thinking...)");
-      const thinkingEl = chatLog.lastChild;
-
-      try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: q }),
-        });
-
-        const data = await res.json();
-        thinkingEl.textContent = data.reply || "(no response)";
-      } catch (err) {
-        thinkingEl.textContent = "[Network error: " + err.message + "]";
-      }
+  document.getElementById("question").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendQuestion();
     }
+  });
 
-    document.getElementById("question").addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        sendQuestion();
-      }
-    });
+  const fileInput = document.getElementById("file-upload");
+  const fileName = document.getElementById("file-name");
 
-    const fileInput = document.getElementById("file-upload");
-    const fileName = document.getElementById("file-name");
+  fileInput.addEventListener("change", () => {
+    fileName.textContent =
+      fileInput.files.length > 0
+        ? "Selected: " + fileInput.files[0].name
+        : "No file selected";
+  });
+</script>
 
-    fileInput.addEventListener("change", function () {
-      fileName.textContent =
-        fileInput.files.length > 0
-          ? "Selected: " + fileInput.files[0].name
-          : "No file selected";
-    });
-  </script>
 </body>
 </html>
