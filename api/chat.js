@@ -1,62 +1,64 @@
 import OpenAI from "openai";
 
-export const config = {
-  runtime: "nodejs"
-};
-
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+export const config = {
+  // 这行是这次部署失败的根源，必须用 "nodejs"
+  runtime: "nodejs",
+};
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
+export default async function handler(req, res) {
+  // 只允许 POST
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
+  // 环境变量没配好时，直接返回明确错误
+  if (!process.env.OPENAI_API_KEY) {
+    return res
+      .status(500)
+      .json({ error: "OPENAI_API_KEY is not set in Vercel environment" });
   }
 
   try {
+    // 读取原始 body
     let body = "";
-    await new Promise(resolve => {
-      req.on("data", chunk => (body += chunk));
+    await new Promise((resolve, reject) => {
+      req.on("data", (chunk) => {
+        body += chunk;
+      });
       req.on("end", resolve);
+      req.on("error", reject);
     });
 
-    const data = body ? JSON.parse(body) : {};
-    const message = data.message;
-    if (!message) {
-      return res.status(400).json({ error: "Missing message" });
+    const { message } = JSON.parse(body || "{}");
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Missing or invalid 'message' in request body" });
     }
 
-    const thread = await client.beta.threads.create();
-
-    await client.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: message
+    // 使用 chat.completions.create
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant for AI and religion research.",
+        },
+        { role: "user", content: message },
+      ],
     });
 
-    const run = await client.beta.threads.runs.createAndPoll({
-      thread_id: thread.id,
-      assistant_id: process.env.ASSISTANT_ID
-    });
+    const text = completion.choices?.[0]?.message?.content ?? "No reply";
 
-    const messages = await client.beta.threads.messages.list({ thread_id: thread.id });
-    const assistantMsg = messages.data.find(m => m.role === "assistant");
-    const reply =
-      assistantMsg?.content?.[0]?.text?.value || "No reply.";
-
-    return res.status(200).json({ reply });
+    return res.status(200).json({ reply: text });
   } catch (err) {
-    console.error("SERVER ERROR:", err);
-    return res.status(500).json({
-      error: "Server internal error",
-      detail: err.message
-    });
+    console.error("API error:", err);
+    return res
+      .status(500)
+      .json({ error: err.message || "Internal Server Error" });
   }
 }
