@@ -22,60 +22,43 @@ export default async function handler(req, res) {
 
   try {
     const { message } = req.body || {};
-
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Missing or invalid 'message'" });
     }
 
+    // create a new thread
     const thread = await client.beta.threads.create();
 
-    await client.beta.threads.messages.create({
-      thread_id: thread.id,
+    // add the user message to the thread
+    await client.beta.threads.messages.create(thread.id, {
       role: "user",
       content: message,
     });
 
-    const run = await client.beta.threads.runs.create({
-      thread_id: thread.id,
+    // run the assistant on the thread
+    const run = await client.beta.threads.runs.create(thread.id, {
       assistant_id: ASSISTANT_ID,
     });
 
-    let done = false;
-    while (!done) {
-      const status = await client.beta.threads.runs.retrieve({
-        thread_id: thread.id,
-        run_id: run.id,
-      });
-
-      if (status.status === "completed") {
-        done = true;
-      } else if (
-        status.status === "failed" ||
-        status.status === "cancelled" ||
-        status.status === "expired"
-      ) {
-        console.error("Run status:", status.status, status.last_error);
-        return res.status(500).json({
-          error: `Run ${status.status}`,
-          details: status.last_error,
-        });
-      } else {
-        await new Promise((r) => setTimeout(r, 700));
+    // poll until the run completes or fails
+    while (true) {
+      const runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
+      if (runStatus.status === "completed") {
+        break;
       }
+      if (["failed", "cancelled", "expired"].includes(runStatus.status)) {
+        return res.status(500).json({
+          error: `Run ${runStatus.status}`,
+          details: runStatus.last_error,
+        });
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
-    const messages = await client.beta.threads.messages.list({
-      thread_id: thread.id,
-    });
-
-    const first = messages.data[0];
+    // fetch messages from the thread and extract the assistant's reply
+    const messages = await client.beta.threads.messages.list(thread.id);
     const reply =
-      first &&
-      first.content &&
-      first.content[0] &&
-      first.content[0].type === "text"
-        ? first.content[0].text.value
-        : "No reply";
+      messages.data?.[0]?.content?.[0]?.text?.value || "No reply";
 
     return res.status(200).json({ reply });
   } catch (err) {
