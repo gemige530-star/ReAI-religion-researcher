@@ -22,7 +22,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 手动解析 JSON
     let body = "";
     await new Promise(resolve => {
       req.on("data", chunk => (body += chunk));
@@ -31,31 +30,24 @@ export default async function handler(req, res) {
 
     const data = body ? JSON.parse(body) : {};
     const message = data.message;
-
     if (!message) {
       return res.status(400).json({ error: "Missing message" });
     }
 
-    // 创建线程
     const thread = await client.beta.threads.create();
 
-    // 加入用户消息
-    await client.beta.threads.messages.create({
-      thread_id: thread.id,
+    await client.beta.threads.messages.create(thread.id, {
       role: "user",
       content: message
     });
 
-    // 正确调用 run（新版 SDK 参数写法）
     const run = await client.beta.threads.runs.createAndPoll({
       thread_id: thread.id,
       assistant_id: process.env.ASSISTANT_ID
     });
 
-    // 获取所有消息
-    const msgs = await client.beta.threads.messages.list({ thread_id: thread.id });
-
-    const assistantMsg = msgs.data.filter(m => m.role === "assistant").pop();
+    const messages = await client.beta.threads.messages.list({ thread_id: thread.id });
+    const assistantMsg = messages.data.find(m => m.role === "assistant");
     const reply = assistantMsg?.content?.[0]?.text?.value || "No reply.";
 
     return res.status(200).json({ reply });
