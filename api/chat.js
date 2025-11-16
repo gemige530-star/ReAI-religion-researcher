@@ -1,3 +1,4 @@
+console.log("Assistant ID = ", process.env.ASSISTANT_ID)
 import OpenAI from "openai";
 
 export const config = {
