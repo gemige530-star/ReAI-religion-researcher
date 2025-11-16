@@ -48,7 +48,8 @@ export default async function handler(req, res) {
 
     const messages = await client.beta.threads.messages.list({ thread_id: thread.id });
     const assistantMsg = messages.data.find(m => m.role === "assistant");
-    const reply = assistantMsg?.content?.[0]?.text?.value || "No reply.";
+    const reply =
+      assistantMsg?.content?.[0]?.text?.value || "No reply.";
 
     return res.status(200).json({ reply });
   } catch (err) {
