@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Digital Religion Researcher</title>
+  <title> ReAI Researcher</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     * {
       box-sizing: border-box;
@@ -21,7 +22,7 @@
       min-height: 100vh;
       text-align: center;
     }
-    h1 {
+    h1 
       margin-top: 80px;
       margin-bottom: 12px;
       font-size: 32px;
@@ -34,6 +35,8 @@
       font-size: 16px;
       color: #475569;
     }
+
+    /* 保留你的聊天容器外观 */
     .chat-container {
       width: 100%;
       max-width: 720px;
@@ -45,6 +48,7 @@
       flex-direction: column;
       gap: 16px;
     }
+
     .prompt-label {
       font-size: 13px;
       color: #9ca3af;
@@ -52,11 +56,44 @@
       letter-spacing: 0.12em;
       text-align: left;
     }
+
+    /* ChatGPT 风格聊天框 */
+    .chat-log {
+      width: 100%;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #f8fafb;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: left;
+    }
+    .msg {
+      padding: 10px 12px;
+      border-radius: 12px;
+      max-width: 80%;
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: #111827;
+      color: white;
+    }
+    .msg.ai {
+      align-self: flex-start;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
     .input-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-top: 4px;
     }
     #question {
       flex: 1;
@@ -88,38 +125,40 @@
       transition: all 0.18s ease;
       white-space: nowrap;
     }
-    #send-btn span.icon {
-      font-size: 15px;
-    }
     #send-btn:hover {
       background: #1e293b;
       transform: translateY(-1px);
       box-shadow: 0 6px 16px rgba(15,23,42,0.18);
     }
-    #send-btn:active {
-      transform: translateY(0px);
-      box-shadow: none;
-    }
-    #response {
-      margin-top: 6px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #f9fafb;
-      border: 1px solid #f3f4f6;
-      font-size: 14px;
-      color: #111827;
-      min-height: 40px;
-      white-space: pre-wrap;
+
+    /* 文件上传区域保持原样 */
+    .file-upload-section {
+      margin-top: 10px;
       text-align: left;
+    }
+    .file-label {
+      font-size: 14px;
+      color: #334155;
+    }
+    .file-name {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #6b7280;
     }
   </style>
 </head>
+
 <body>
   <h1>Digital Religion Researcher</h1>
   <div class="subtitle">An interactive interface for exploring questions about digital religion</div>
 
   <div class="chat-container">
-    <div class="prompt-label">Question</div>
+    <div class="prompt-label">Conversation</div>
+
+    <!-- ChatGPT 风格对话记录 -->
+    <div id="chat-log" class="chat-log"></div>
+
+    <!-- 输入栏 -->
     <div class="input-row">
       <input type="text" id="question" placeholder="Ask something about digital religion..." />
       <button id="send-btn" onclick="sendQuestion()">
@@ -128,61 +167,66 @@
       </button>
     </div>
 
-    <!-- ✅ 文件上传区域 -->
+    <!-- 文件上传区（保留你的原样式） -->
     <div class="file-upload-section">
       <label for="file-upload" class="file-label">Upload File</label>
       <input type="file" id="file-upload" />
       <div id="file-name" class="file-name">No file selected</div>
     </div>
-
-    <div id="response"></div>
   </div>
 
   <script>
-  async function sendQuestion() {
-    const input = document.getElementById("question");
-    const box = document.getElementById("response");
-    const q = input.value.trim();
-    if (!q) return;
+    const chatLog = document.getElementById("chat-log");
 
-    box.textContent = "Q: " + q + "\n\nAI: (thinking...)";
-    input.value = "";
+    function addMessage(sender, text) {
+      const div = document.createElement("div");
+      div.classList.add("msg", sender);
+      div.textContent = text;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: q }),
-      });
+    async function sendQuestion() {
+      const input = document.getElementById("question");
+      const q = input.value.trim();
+      if (!q) return;
 
-      if (!res.ok) {
-        box.textContent += `\n\n[Error ${res.status}]`;
-        return;
+      addMessage("user", q);
+      input.value = "";
+
+      addMessage("ai", "(thinking...)");
+      const thinkingEl = chatLog.lastChild;
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: q }),
+        });
+
+        const data = await res.json();
+        thinkingEl.textContent = data.reply || "(no response)";
+      } catch (err) {
+        thinkingEl.textContent = "[Network error: " + err.message + "]";
       }
-
-      const data = await res.json();
-      box.textContent = "Q: " + q + "\n\nAI: " + (data.reply || "(no response)");
-    } catch (err) {
-      box.textContent += `\n\n[Network error: ${err.message}]`;
     }
-  }
 
-  // 回车键发送
-  document.getElementById("question").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendQuestion();
-    }
-  });
+    document.getElementById("question").addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendQuestion();
+      }
+    });
 
-  // 文件上传交互
-  const fileInput = document.getElementById("file-upload");
-  const fileName = document.getElementById("file-name");
-  fileInput.addEventListener("change", function () {
-    fileName.textContent = fileInput.files.length > 0
-      ? "Selected: " + fileInput.files[0].name
-      : "No file selected";
-  });
-</script>
+    const fileInput = document.getElementById("file-upload");
+    const fileName = document.getElementById("file-name");
+
+    fileInput.addEventListener("change", function () {
+      fileName.textContent =
+        fileInput.files.length > 0
+          ? "Selected: " + fileInput.files[0].name
+          : "No file selected";
+    });
+  </script>
 </body>
 </html>
