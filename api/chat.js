@@ -1,14 +1,11 @@
 import OpenAI from "openai";
 
-export const config = {
-  runtime: "nodejs",
-};
+export const runtime = "nodejs";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 你的 Assistant ID（已经从旁边页面读取）
 const ASSISTANT_ID = "asst_GhAw3GpyKVO9YmObNz8pbmNQ";
 
 export default async function handler(req, res) {
@@ -24,46 +21,61 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 处理 body
-    const { message } = req.body ?? {};
-    if (!message) {
-      return res.status(400).json({ error: "Missing message" });
+    const { message } = req.body || {};
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Missing or invalid 'message'" });
     }
 
-    // 1️⃣ 创建线程
     const thread = await client.beta.threads.create();
 
-    // 2️⃣ 添加消息
     await client.beta.threads.messages.create({
       thread_id: thread.id,
       role: "user",
       content: message,
     });
 
-    // 3️⃣ 运行 assistant
     const run = await client.beta.threads.runs.create({
       thread_id: thread.id,
       assistant_id: ASSISTANT_ID,
     });
 
-    // 4️⃣ 等待完成
-    let completed = false;
-    while (!completed) {
+    let done = false;
+    while (!done) {
       const status = await client.beta.threads.runs.retrieve({
         thread_id: thread.id,
         run_id: run.id,
       });
 
-      if (status.status === "completed") completed = true;
-      else await new Promise((r) => setTimeout(r, 500));
+      if (status.status === "completed") {
+        done = true;
+      } else if (
+        status.status === "failed" ||
+        status.status === "cancelled" ||
+        status.status === "expired"
+      ) {
+        console.error("Run status:", status.status, status.last_error);
+        return res.status(500).json({
+          error: `Run ${status.status}`,
+          details: status.last_error,
+        });
+      } else {
+        await new Promise((r) => setTimeout(r, 700));
+      }
     }
 
-    // 5️⃣ 获取 assistant 回复
     const messages = await client.beta.threads.messages.list({
       thread_id: thread.id,
     });
 
-    const reply = messages.data?.[0]?.content?.[0]?.text?.value || "No reply";
+    const first = messages.data[0];
+    const reply =
+      first &&
+      first.content &&
+      first.content[0] &&
+      first.content[0].type === "text"
+        ? first.content[0].text.value
+        : "No reply";
 
     return res.status(200).json({ reply });
   } catch (err) {
