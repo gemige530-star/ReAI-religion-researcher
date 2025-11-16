@@ -1,4 +1,3 @@
-console.log("Assistant ID = ", process.env.ASSISTANT_ID)
 import OpenAI from "openai";
 
 export const config = {
@@ -23,6 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 手动解析 JSON
     let body = "";
     await new Promise(resolve => {
       req.on("data", chunk => (body += chunk));
@@ -36,24 +36,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing message" });
     }
 
+    // 创建线程
     const thread = await client.beta.threads.create();
 
-    await client.beta.threads.messages.create(thread.id, {
+    // 加入用户消息
+    await client.beta.threads.messages.create({
+      thread_id: thread.id,
       role: "user",
       content: message
     });
 
+    // 正确调用 run（新版 SDK 参数写法）
     const run = await client.beta.threads.runs.createAndPoll({
       thread_id: thread.id,
       assistant_id: process.env.ASSISTANT_ID
     });
 
-    const msgs = await client.beta.threads.messages.list(thread.id);
+    // 获取所有消息
+    const msgs = await client.beta.threads.messages.list({ thread_id: thread.id });
 
     const assistantMsg = msgs.data.filter(m => m.role === "assistant").pop();
-
-    const reply =
-      assistantMsg?.content?.[0]?.text?.value || "No reply.";
+    const reply = assistantMsg?.content?.[0]?.text?.value || "No reply.";
 
     return res.status(200).json({ reply });
   } catch (err) {
