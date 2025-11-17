@@ -43,13 +43,14 @@ export async function POST(req) {
     });
 
     const data = await res.json();
-    const reply =
-      data?.output_text ||
+
+    const output =
       data?.output?.[0]?.content?.[0]?.text ||
+      data?.output_text ||
       "No valid output.";
 
     return new Response(
-      JSON.stringify({ reply }),
+      JSON.stringify({ reply: output }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
 
