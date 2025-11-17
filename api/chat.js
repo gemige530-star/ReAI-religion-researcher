@@ -28,7 +28,7 @@ export async function POST(req) {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4.1",
+        model: "gpt-4.1-preview",
         input: [
           {
             role: "user",
