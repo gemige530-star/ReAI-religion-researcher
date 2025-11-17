@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import pdf from "pdf-parse";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export const runtime = "edge";
@@ -16,7 +15,9 @@ export async function POST(req) {
 
     // If a file was uploaded, read it from the upload API
     if (file_id) {
-      const url = `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : ""}/api/upload-file?file_id=${file_id}`;
+      const url = `${
+        process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : ""
+      }/api/upload-file?file_id=${file_id}`;
       const res = await fetch(url);
       const fileBuffer = Buffer.from(await res.arrayBuffer());
 
@@ -34,13 +35,25 @@ export async function POST(req) {
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: finalPrompt }]
+      messages: [{ role: "user", content: finalPrompt }],
     });
 
-    return NextResponse.json({
-      reply: completion.choices[0].message.content
-    });
+    return new Response(
+      JSON.stringify({
+        reply: completion.choices[0].message.content,
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (error) {
-    return NextResponse.json({ reply: "Backend error." });
+    return new Response(
+      JSON.stringify({ reply: "Backend error." }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }
