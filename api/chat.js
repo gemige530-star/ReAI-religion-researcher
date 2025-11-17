@@ -35,7 +35,7 @@ export async function POST(req) {
       : message;
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: finalPrompt }],
     });
 
@@ -49,10 +49,11 @@ export async function POST(req) {
       },
     );
   } catch (error) {
+    console.error("Error in POST /api/chat:", error);
     return new Response(
       JSON.stringify({ reply: "Backend error." }),
       {
-        status: 500,
+        status: 200,
         headers: { "Content-Type": "application/json" },
       },
     );
