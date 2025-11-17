@@ -24,6 +24,9 @@ export async function POST(req) {
       }
       return null;
     };
+    export async function GET() {
+  return Response.json({ status: "ok" });
+}
 
     // --------------------------------------------
     // Helper: detect tool call
