@@ -16,53 +16,82 @@ const PDF_FILE_IDS = [
   "file-PBuKzikkXLBgXXR3wiDrRs"
 ];
 
+let vectorStoreId = null;
+
+async function getVectorStoreId(apiKey) {
+  if (vectorStoreId) {
+    return vectorStoreId;
+  }
+  // Create vector store
+  const createRes = await fetch('https://api.openai.com/v1/vector_stores', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({ name: 'religion_pdf_store' })
+  });
+  const createData = await createRes.json();
+  const vsId = createData.id;
+  // Add files to vector store
+  for (const fileId of PDF_FILE_IDS) {
+    await fetch(`https://api.openai.com/v1/vector_stores/${vsId}/files`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ file_id: fileId })
+    });
+  }
+  vectorStoreId = vsId;
+  return vectorStoreId;
+}
+
 export async function POST(req) {
   try {
     const { message } = await req.json();
     const apiKey = process.env.OPENAI_API_KEY;
+    const vsId = await getVectorStoreId(apiKey);
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4.1-preview",
+        model: 'gpt-4.1-preview',
         input: message,
-        tools: [{ type: "file_search" }],
-        tool_resources: {
-          file_search: {
-            file_ids: PDF_FILE_IDS
+        tools: [
+          {
+            type: 'file_search',
+            vector_store_ids: [vsId]
           }
-        }
+        ]
       })
     });
 
     const data = await response.json();
-    // Log full response for debugging
-    console.log("OpenAI response", JSON.stringify(data));
-
+    console.log('OpenAI response', JSON.stringify(data));
     const output =
-      (data && data.output && data.output[0] && data.output[0].content && data.output[0].content[0] && data.output[0].content[0].text) ||
+      (data &&
+        data.output &&
+        data.output[0] &&
+        data.output[0].content &&
+        data.output[0].content[0] &&
+        data.output[0].content[0].text) ||
       data.output_text ||
-      "No valid output from model.";
-
-    return new Response(
-      JSON.stringify({ reply: output }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      }
-    );
+      'No valid output from model.';
+    return new Response(JSON.stringify({ reply: output }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (e) {
     console.error('Error handling POST', e);
-    return new Response(
-      JSON.stringify({ reply: "Server error." }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      }
-    );
+    return new Response(JSON.stringify({ reply: 'Server error.' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
