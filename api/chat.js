@@ -1,12 +1,6 @@
-import OpenAI from "openai";
-
 export const config = {
   runtime: "nodejs",
 };
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -15,24 +9,27 @@ export default async function handler(req, res) {
   }
   try {
     const { message, file_id } = req.body || {};
-
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Missing or invalid 'message'" });
     }
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "You are a helpful assistant for digital religion research." },
-        { role: "user", content: message },
-      ],
-    });
+    let userMsg = message;
+    let reply;
 
-    const reply = completion.choices[0].message.content;
+    // If message contains blank line, treat following part as uploaded file info
+    if (message.includes("\n\n")) {
+      const parts = message.split("\n\n");
+      userMsg = parts[0];
+      const fileText = parts.slice(1).join("\n\n");
+      const fileLength = fileText.length;
+      reply = `You asked: ${userMsg}. I received a file with ${fileLength} characters to analyze.`;
+    } else {
+      reply = `You said: ${userMsg}`;
+    }
 
     return res.status(200).json({ reply });
-  } catch (err) {
-    console.error("API error:", err);
-    return res.status(500).json({ error: err.message || "Internal Server Error" });
+  } catch (error) {
+    console.error("Error generating reply:", error);
+    return res.status(500).json({ error: "Error generating reply" });
   }
 }
