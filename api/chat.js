@@ -1,28 +1,62 @@
-import { Buffer } from 'buffer';
-
 export const runtime = 'nodejs';
+
+const PDF_FILE_IDS = [
+  "file-2QiKHEfiSCKQAzaxRrmnKc",
+  "file-NMHwmF86JWVSaCVfUpQWZp",
+  "file-VepTsLv3uAtmGTE51zP2wU",
+  "file-SzxKoK37Ev7wLXSeHNBmAP",
+  "file-313EDCikLTwFww3UhjTJzg",
+  "file-FeYUx1sfdsoRhAVQAzfNgq",
+  "file-BNWBYXQxoxtaZojRwy4iUF",
+  "file-1AjG1xP87XKS3Py8pZne79",
+  "file-8jMYouLeJYHS6wEEJRNk3C",
+  "file-XVGNfuxoTyp5MmBx5LUV5X",
+  "file-Mr9HZ51f8xoK3bxGAbn949",
+  "file-JgmvVVhB1wzk6rFwzvUwDg",
+  "file-PBuKzikkXLBgXXR3wiDrRs"
+];
 
 export async function POST(req) {
   try {
-    const { message, file_id } = await req.json();
-    let fileText = "";
-    if (file_id) {
-      const base = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
-      const url = `${base}/api/upload-file?id=${file_id}`;
-      const res = await fetch(url);
-      const arrayBuffer = await res.arrayBuffer();
-      const fileBuffer = Buffer.from(arrayBuffer);
-      try {
-        const { default: pdf } = await import('pdf-parse');
-        const parsed = await pdf(fileBuffer);
-        fileText = parsed.text.substring(0, 20000);
-      } catch (e) {
-        fileText = "Unable to parse PDF file.";
-      }
-    }
-    const reply = fileText ? `以下是上传文件的内容：\n${fileText}` : `未上传文件。用户消息：${message}`;
-    return new Response(JSON.stringify({ reply }), { status: 200, headers: { "Content-Type": "application/json" } });
-  } catch (error) {
-    return new Response(JSON.stringify({ reply: "Backend error." }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const { message } = await req.json();
+
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    const res = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1",
+        input: message,
+        tools: [
+          { type: "file_search" }
+        ],
+        tool_resources: {
+          file_search: {
+            file_ids: PDF_FILE_IDS
+          }
+        }
+      })
+    });
+
+    const data = await res.json();
+    const reply =
+      data?.output_text ||
+      data?.output?.[0]?.content?.[0]?.text ||
+      "No valid output.";
+
+    return new Response(
+      JSON.stringify({ reply }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ reply: "Server error." }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   }
 }
