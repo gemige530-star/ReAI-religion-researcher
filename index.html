@@ -197,17 +197,9 @@
         <input id="question" type="text" placeholder="Ask something about digital religion..." />
         <button id="send-btn" onclick="sendQuestion()">Send ➜</button>
       </div>
-
-      <div class="file-upload-section">
-        <label for="file-upload" class="file-label">Upload File</label>
-        <input type="file" id="file-upload" />
-        <button id="upload-btn" onclick="uploadFile()">Upload</button>
-        <div id="file-name" class="file-name">No file selected</div>
-      </div>
     </div>
   </div>
-
-<script>
+  <script>
   const chatLog = document.getElementById("chat-log");
 
   function addMessage(sender, text) {
@@ -216,36 +208,6 @@
     msg.textContent = text;
     chatLog.appendChild(msg);
     chatLog.scrollTop = chatLog.scrollHeight;
-  }
-
-  let uploadedFile = { text: null, id: null };
-
-  async function uploadFile() {
-    const fileInput = document.getElementById("file-upload");
-    const fileNameDiv = document.getElementById("file-name");
-    const file = fileInput.files[0];
-    if (!file) return;
-
-    // Display uploaded file name in chat
-    addMessage("user", "Uploaded file: " + file.name);
-
-    // Read file content and upload to server
-    const reader = new FileReader();
-    reader.onload = async function() {
-      uploadedFile.text = reader.result;
-      try {
-        const res = await fetch("/api/upload-file", {
-          method: "POST",
-          body: file
-        });
-        const data = await res.json();
-        uploadedFile.id = data.file_id;
-        fileNameDiv.textContent = "Uploaded: " + file.name;
-      } catch (e) {
-        fileNameDiv.textContent = "[Upload failed]";
-      }
-    };
-    reader.readAsText(file);
   }
 
   async function sendQuestion() {
@@ -260,13 +222,10 @@
     const thinking = chatLog.lastChild;
 
     try {
-      const bodyData = uploadedFile.text
-        ? { message: q + "\n\n" + uploadedFile.text, file_id: uploadedFile.id }
-        : { message: q };
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData),
+        body: JSON.stringify({ message: q })
       });
 
       const data = await res.json();
@@ -282,17 +241,6 @@
       sendQuestion();
     }
   });
-
-  const fileInput = document.getElementById("file-upload");
-  const fileName = document.getElementById("file-name");
-
-  fileInput.addEventListener("change", () => {
-    fileName.textContent =
-      fileInput.files.length > 0
-        ? "Selected: " + fileInput.files[0].name
-        : "No file selected";
-  });
 </script>
 
-</body>
-</html>
+
