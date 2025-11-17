@@ -19,10 +19,9 @@ const PDF_FILE_IDS = [
 export async function POST(req) {
   try {
     const { message } = await req.json();
-
     const apiKey = process.env.OPENAI_API_KEY;
 
-    const res = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,10 +29,15 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: "gpt-4.1",
-        input: message,
-        tools: [
-          { type: "file_search" }
+        input: [
+          {
+            role: "user",
+            content: [
+              { type: "input_text", text: message }
+            ]
+          }
         ],
+        tools: [{ type: "file_search" }],
         tool_resources: {
           file_search: {
             file_ids: PDF_FILE_IDS
@@ -42,22 +46,27 @@ export async function POST(req) {
       })
     });
 
-    const data = await res.json();
+    const data = await response.json();
 
     const output =
       data?.output?.[0]?.content?.[0]?.text ||
       data?.output_text ||
-      "No valid output.";
+      "No valid output from model.";
 
     return new Response(
       JSON.stringify({ reply: output }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }
     );
-
   } catch (e) {
     return new Response(
       JSON.stringify({ reply: "Server error." }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }
     );
   }
 }
