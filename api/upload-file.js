@@ -1,3 +1,4 @@
+// fix 401 unauthorized by allowing GET retrieval
 const files = {};
 
 export const config = {
