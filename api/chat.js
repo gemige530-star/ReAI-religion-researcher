@@ -40,10 +40,12 @@ export async function POST(req) {
     });
 
     const data = await response.json();
+    // Log full response for debugging
+    console.log("OpenAI response", JSON.stringify(data));
 
     const output =
-      data?.output?.[0]?.content?.[0]?.text ||
-      data?.output_text ||
+      (data && data.output && data.output[0] && data.output[0].content && data.output[0].content[0] && data.output[0].content[0].text) ||
+      data.output_text ||
       "No valid output from model.";
 
     return new Response(
@@ -54,6 +56,7 @@ export async function POST(req) {
       }
     );
   } catch (e) {
+    console.error('Error handling POST', e);
     return new Response(
       JSON.stringify({ reply: "Server error." }),
       {
