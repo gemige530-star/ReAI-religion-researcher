@@ -1,31 +1,22 @@
 export const config = {
   api: {
-    bodyParser: false
-  }
+    bodyParser: false,
+  },
 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Only POST allowed' });
-    return;
+    return res.status(405).json({ error: 'Only POST allowed' });
   }
-
   try {
     let rawBody = [];
     for await (const chunk of req) {
       rawBody.push(chunk);
     }
     const buffer = Buffer.concat(rawBody);
-
-    res.status(200).json({
-      ok: true,
-      size: buffer.length,
-      message: 'File upload endpoint is working.',
-    });
+    const file_id = 'file_' + Date.now();
+    return res.status(200).json({ file_id });
   } catch (error) {
-    res.status(500).json({
-      ok: false,
-      error: error.message
-    });
+    return res.status(500).json({ error: error.message });
   }
 }
