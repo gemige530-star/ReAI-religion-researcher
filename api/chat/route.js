@@ -1,4 +1,5 @@
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const PDF_FILE_IDS = [
   "file-xxxx",
