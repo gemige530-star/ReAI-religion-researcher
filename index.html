@@ -222,7 +222,7 @@
     const thinking = chatLog.lastChild;
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/app/api/chat/route.js", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: q })
