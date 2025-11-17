@@ -7,71 +7,142 @@
 
   <style>
     * { box-sizing: border-box; }
+
     html, body {
-      height: 100%; margin: 0; padding: 0;
+      height: 100%;
+      margin: 0;
+      padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: linear-gradient(180deg, #f8fafc, #e0e7ff);
       color: #111827;
     }
-    body { display: flex; flex-direction: column; align-items: center; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
     h1 {
-      margin-top: 60px; margin-bottom: 12px;
-      font-size: 32px; font-weight: 700;
-      color: #1e293b; text-align: center;
+      margin-top: 60px;
+      margin-bottom: 12px;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: center;
     }
+
     .subtitle {
-      margin-bottom: 28px; font-size: 16px;
-      color: #475569; text-align: center;
+      margin-bottom: 28px;
+      font-size: 16px;
+      color: #475569;
+      text-align: center;
     }
 
     .chat-wrapper {
-      width: 100%; max-width: 720px;
-      margin-top: auto; padding: 20px;
+      width: 100%;
+      max-width: 720px;
+      margin-top: auto;
+      padding: 20px;
     }
 
     .chat-container {
-      width: 100%; background: #fff;
+      width: 100%;
+      background: #ffffff;
       border-radius: 18px;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
-      display: flex; flex-direction: column;
-      padding: 20px; gap: 16px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
     }
 
     .chat-log {
-      width: 100%; height: 360px;
-      overflow-y: auto; background: #f8fafb;
-      padding: 14px; border-radius: 12px;
+      width: 100%;
+      height: 360px;
+      overflow-y: auto;
+      background: #f8fafb;
+      padding: 14px;
+      border-radius: 12px;
       border: 1px solid #f3f4f6;
-      display: flex; flex-direction: column; gap: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .msg {
-      padding: 10px 12px; border-radius: 12px;
-      max-width: 80%; white-space: pre-wrap;
-      font-size: 14px; line-height: 1.5;
+      padding: 10px 12px;
+      border-radius: 12px;
+      max-width: 80%;
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.5;
     }
-    .msg.user { align-self: flex-end; background: #111827; color: white; }
-    .msg.ai { align-self: flex-start; background: #e5e7eb; color: #111827; }
 
-    .input-row { display: flex; align-items: center; gap: 10px; }
+    .msg.user {
+      align-self: flex-end;
+      background: #111827;
+      color: white;
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
     #question {
-      flex: 1; padding: 12px 14px;
-      border-radius: 12px; border: 1px solid #e5e7eb;
-      background: #f9fafb; font-size: 15px; outline: none;
-    }
-    #question:focus {
-      border-color: #111827; background: #fff;
-      box-shadow: 0 0 0 2px rgba(17,24,39,0.06);
-    }
-    #send-btn {
-      padding: 11px 18px; border: none; border-radius: 12px;
-      background: #111827; color: #fff; font-size: 14px;
-      cursor: pointer; font-weight: 500;
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 15px;
+      outline: none;
     }
 
-    .file-upload-section { margin-top: 10px; text-align: left; }
+    #question:focus {
+      border-color: #111827;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(17,24,39,0.06);
+    }
+
+    #send-btn {
+      padding: 11px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #111827;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .file-upload-section {
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    #upload-btn {
+      margin-top: 10px;
+      padding: 9px 14px;
+      background: #111827;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #upload-btn:hover {
+      background: #1e293b;
+    }
   </style>
 </head>
 
@@ -83,17 +154,25 @@
   <div class="chat-wrapper">
     <div class="chat-container">
 
+      <!-- CHAT LOG -->
       <div id="chat-log" class="chat-log"></div>
 
+      <!-- INPUT ROW -->
       <div class="input-row">
         <input id="question" type="text" placeholder="Ask something..." />
         <button id="send-btn" onclick="sendQuestion()">Send</button>
       </div>
 
+      <!-- FILE UPLOAD -->
       <div class="file-upload-section">
-        <label>Upload PDF</label><br />
-        <input type="file" id="file-upload" accept=".pdf" onchange="uploadSelectedFile()" />
-        <div id="file-name" style="font-size:13px; color:#6b7280; margin-top:6px;">No file uploaded</div>
+        <label>Select PDF</label><br />
+        <input type="file" id="file-upload" accept=".pdf" />
+
+        <button id="upload-btn" onclick="uploadSelectedFile()">Upload</button>
+
+        <div id="file-status" style="margin-top: 8px; font-size: 14px; color: #6b7280;">
+          No file uploaded
+        </div>
       </div>
 
     </div>
@@ -101,6 +180,7 @@
 
 <script>
   const chatLog = document.getElementById("chat-log");
+
   function addMessage(sender, text) {
     const msg = document.createElement("div");
     msg.classList.add("msg", sender);
@@ -111,37 +191,57 @@
 
   let uploadedFileId = null;
 
+  // ---------------------------
+  // FILE UPLOAD LOGIC (FINAL)
+  // ---------------------------
   async function uploadSelectedFile() {
-    const input = document.getElementById("file-upload");
-    if (!input.files.length) return;
+    const fileInput = document.getElementById("file-upload");
+    const status = document.getElementById("file-status");
 
-    const file = input.files[0];
+    if (!fileInput.files.length) {
+      alert("Please choose a PDF first.");
+      return;
+    }
+
+    const file = fileInput.files[0];
     const formData = new FormData();
     formData.append("file", file);
 
-    addMessage("ai", "Uploading PDF...");
+    status.textContent = "Uploading PDF...";
+    status.style.color = "#374151";
 
-    const res = await fetch("/api/upload-file", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/upload-file", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (data.id) {
-      uploadedFileId = data.id;
-      document.getElementById("file-name").textContent = "Uploaded: " + data.filename;
-      addMessage("ai", "PDF uploaded. file_id: " + uploadedFileId);
-    } else {
-      addMessage("ai", "Upload failed");
+      const data = await res.json();
+
+      if (data.file_id) {
+        uploadedFileId = data.file_id;
+        status.textContent = "Upload complete: " + data.filename;
+        status.style.color = "#059669"; // green
+      } else {
+        status.textContent = "Upload failed.";
+        status.style.color = "#dc2626"; // red
+      }
+    } catch (err) {
+      status.textContent = "Network error.";
+      status.style.color = "#dc2626";
     }
   }
 
+  // ---------------------------
+  // CHAT LOGIC
+  // ---------------------------
   async function sendQuestion() {
-    const q = document.getElementById("question").value.trim();
+    const inputBox = document.getElementById("question");
+    const q = inputBox.value.trim();
     if (!q) return;
 
     addMessage("user", q);
-    document.getElementById("question").value = "";
+    inputBox.value = "";
 
     const thinking = document.createElement("div");
     thinking.classList.add("msg", "ai");
@@ -158,10 +258,10 @@
     });
 
     const data = await res.json();
-    thinking.textContent = data.reply || "No response";
+    thinking.textContent = data.reply || "(no response)";
   }
 
-  document.getElementById("question").addEventListener("keydown", e => {
+  document.getElementById("question").addEventListener("keydown", (e) => {
     if (e.key === "Enter") sendQuestion();
   });
 </script>
