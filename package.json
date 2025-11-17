@@ -1,9 +1,0 @@
-{
-  "name": "re-ai-religion-researcher",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "openai": "^4.0.0",
-    "pdf-parse": "^2.4.5"
-  }
-}
