@@ -1,0 +1,245 @@
+<!-- minor update to trigger deployment -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Digital Religion Researcher</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: linear-gradient(180deg, #f8fafc, #e0e7ff);
+      color: #111827;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-top: 60px;
+      margin-bottom: 12px;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin-bottom: 28px;
+      font-size: 16px;
+      color: #475569;
+      text-align: center;
+    }
+
+    /* entire chat area auto pushes to bottom */
+    .chat-wrapper {
+      width: 100%;
+      max-width: 720px;
+      margin-top: auto;
+      padding: 20px;
+    }
+
+    .chat-container {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .prompt-label {
+      font-size: 13px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      text-align: left;
+    }
+
+    .chat-log {
+      width: 100%;
+      height: 360px;
+      overflow-y: auto;
+      background: #f8fafb;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .msg {
+      padding: 10px 12px;
+      border-radius: 12px;
+      max-width: 80%;
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: #111827;
+      color: white;
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #question {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 15px;
+      outline: none;
+    }
+
+    #question:focus {
+      border-color: #111827;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(17,24,39,0.06);
+    }
+
+    #send-btn {
+      padding: 11px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #111827;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #send-btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(15,23,42,0.18);
+    }
+
+    .file-upload-section {
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .file-label {
+      font-size: 14px;
+      color: #334155;
+    }
+
+    .file-name {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    #upload-btn {
+      padding: 11px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #4b5563;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    #upload-btn:hover {
+      background: #6b7280;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Digital Religion Researcher</h1>
+  <div class="subtitle">An interactive interface for exploring questions about digital religion</div>
+
+  <div class="chat-wrapper">
+    <div class="chat-container">
+      <div class="prompt-label">Conversation</div>
+
+      <div id="chat-log" class="chat-log"></div>
+
+      <div class="input-row">
+        <input id="question" type="text" placeholder="Ask something about digital religion..." />
+        <button id="send-btn" onclick="sendQuestion()">Send ➜</button>
+      </div>
+    </div>
+  </div>
+  <script>
+  const chatLog = document.getElementById("chat-log");
+
+  function addMessage(sender, text) {
+    const msg = document.createElement("div");
+    msg.classList.add("msg", sender);
+    msg.textContent = text;
+    chatLog.appendChild(msg);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  async function sendQuestion() {
+    const input = document.getElementById("question");
+    const q = input.value.trim();
+    if (!q) return;
+
+    addMessage("user", q);
+    input.value = "";
+
+    addMessage("ai", "(thinking...)");
+    const thinking = chatLog.lastChild;
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: q })
+      });
+
+      const data = await res.json();
+      thinking.textContent = data.reply || "(no response)";
+    } catch (e) {
+      thinking.textContent = "[Network error]";
+    }
+  }
+
+  document.getElementById("question").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendQuestion();
+    }
+  });
+</script>
+
