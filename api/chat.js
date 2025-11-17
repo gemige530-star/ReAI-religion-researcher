@@ -29,14 +29,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: "gpt-4.1-preview",
-        input: [
-          {
-            role: "user",
-            content: [
-              { type: "input_text", text: message }
-            ]
-          }
-        ],
+        input: message,
         tools: [{ type: "file_search" }],
         tool_resources: {
           file_search: {
