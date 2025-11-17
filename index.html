@@ -6,7 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     html, body {
       height: 100%;
@@ -39,6 +41,7 @@
       text-align: center;
     }
 
+    /* entire chat area auto pushes to bottom */
     .chat-wrapper {
       width: 100%;
       max-width: 720px;
@@ -57,6 +60,14 @@
       gap: 16px;
     }
 
+    .prompt-label {
+      font-size: 13px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      text-align: left;
+    }
+
     .chat-log {
       width: 100%;
       height: 360px;
@@ -68,6 +79,7 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+      text-align: left;
     }
 
     .msg {
@@ -122,6 +134,15 @@
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #send-btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(15,23,42,0.18);
     }
 
     .file-upload-section {
@@ -129,19 +150,15 @@
       text-align: left;
     }
 
-    #upload-btn {
-      margin-top: 10px;
-      padding: 9px 14px;
-      background: #111827;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
+    .file-label {
       font-size: 14px;
+      color: #334155;
     }
 
-    #upload-btn:hover {
-      background: #1e293b;
+    .file-name {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #6b7280;
     }
   </style>
 </head>
@@ -153,28 +170,20 @@
 
   <div class="chat-wrapper">
     <div class="chat-container">
+      <div class="prompt-label">Conversation</div>
 
-      <!-- CHAT LOG -->
       <div id="chat-log" class="chat-log"></div>
 
-      <!-- INPUT ROW -->
       <div class="input-row">
-        <input id="question" type="text" placeholder="Ask something..." />
-        <button id="send-btn" onclick="sendQuestion()">Send</button>
+        <input id="question" type="text" placeholder="Ask something about digital religion..." />
+        <button id="send-btn" onclick="sendQuestion()">Send ➜</button>
       </div>
 
-      <!-- FILE UPLOAD -->
       <div class="file-upload-section">
-        <label>Select PDF</label><br />
-        <input type="file" id="file-upload" accept=".pdf" />
-
-        <button id="upload-btn" onclick="uploadSelectedFile()">Upload</button>
-
-        <div id="file-status" style="margin-top: 8px; font-size: 14px; color: #6b7280;">
-          No file uploaded
-        </div>
+        <label for="file-upload" class="file-label">Upload File</label>
+        <input type="file" id="file-upload" />
+        <div id="file-name" class="file-name">No file selected</div>
       </div>
-
     </div>
   </div>
 
@@ -189,80 +198,46 @@
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  let uploadedFileId = null;
-
-  // ---------------------------
-  // FILE UPLOAD LOGIC (FINAL)
-  // ---------------------------
-  async function uploadSelectedFile() {
-    const fileInput = document.getElementById("file-upload");
-    const status = document.getElementById("file-status");
-
-    if (!fileInput.files.length) {
-      alert("Please choose a PDF first.");
-      return;
-    }
-
-    const file = fileInput.files[0];
-    const formData = new FormData();
-    formData.append("file", file);
-
-    status.textContent = "Uploading PDF...";
-    status.style.color = "#374151";
-
-    try {
-      const res = await fetch("/api/upload-file", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (data.file_id) {
-        uploadedFileId = data.file_id;
-        status.textContent = "Upload complete: " + data.filename;
-        status.style.color = "#059669"; // green
-      } else {
-        status.textContent = "Upload failed.";
-        status.style.color = "#dc2626"; // red
-      }
-    } catch (err) {
-      status.textContent = "Network error.";
-      status.style.color = "#dc2626";
-    }
-  }
-
-  // ---------------------------
-  // CHAT LOGIC
-  // ---------------------------
   async function sendQuestion() {
-    const inputBox = document.getElementById("question");
-    const q = inputBox.value.trim();
+    const input = document.getElementById("question");
+    const q = input.value.trim();
     if (!q) return;
 
     addMessage("user", q);
-    inputBox.value = "";
+    input.value = "";
 
-    const thinking = document.createElement("div");
-    thinking.classList.add("msg", "ai");
-    thinking.textContent = "(thinking...)";
-    chatLog.appendChild(thinking);
+    addMessage("ai", "(thinking...)");
+    const thinking = chatLog.lastChild;
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: q,
-        file_id: uploadedFileId,
-      }),
-    });
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: q }),
+      });
 
-    const data = await res.json();
-    thinking.textContent = data.reply || "(no response)";
+      const data = await res.json();
+      thinking.textContent = data.reply || "(no response)";
+    } catch (e) {
+      thinking.textContent = "[Network error]";
+    }
   }
 
-  document.getElementById("question").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendQuestion();
+  document.getElementById("question").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendQuestion();
+    }
+  });
+
+  const fileInput = document.getElementById("file-upload");
+  const fileName = document.getElementById("file-name");
+
+  fileInput.addEventListener("change", () => {
+    fileName.textContent =
+      fileInput.files.length > 0
+        ? "Selected: " + fileInput.files[0].name
+        : "No file selected";
   });
 </script>
 
