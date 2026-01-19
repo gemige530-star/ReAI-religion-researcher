@@ -18,7 +18,7 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        Accept: "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
@@ -59,4 +59,12 @@ export async function POST(req) {
   } catch (err) {
     return Response.json({ error: err?.message || "Unknown server error" }, { status: 500 });
   }
+}
+
+// Added GET handler to avoid 404 on GET requests
+export async function GET() {
+  return Response.json(
+    { message: "This endpoint expects a POST request with JSON body { message: string }." },
+    { status: 200 }
+  );
 }
