@@ -1,7 +1,4 @@
-// app/api/chat/route.js  (Next.js App Router)
-// Uses the "classic" Chat Completions API: POST /v1/chat/completions
-// Returns: { reply: "..." }
-
+// app/api/chat/route.js
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -21,28 +18,34 @@ export async function POST(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
+        "Accept": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "Provide one direct answer." },
-          { role: "user", content: message }
+          { role: "user", content: message },
         ],
-        temperature: 0.2
-      })
+        temperature: 0.2,
+      }),
     });
 
-    const raw = await upstream.text();
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
+    const contentType = upstream.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const raw = await upstream.text();
       return Response.json(
-        { error: "Upstream returned non-JSON", details: raw.slice(0, 1200) },
+        {
+          error: "OpenAI returned non-JSON",
+          status: upstream.status,
+          contentType,
+          details: raw.slice(0, 1200),
+        },
         { status: 502 }
       );
     }
+
+    const data = await upstream.json();
 
     if (!upstream.ok) {
       return Response.json(
@@ -53,11 +56,7 @@ export async function POST(req) {
 
     const reply = data?.choices?.[0]?.message?.content ?? "";
     return Response.json({ reply: reply || "No output" }, { status: 200 });
-
   } catch (err) {
-    return Response.json(
-      { error: err?.message || "Unknown server error" },
-      { status: 500 }
-    );
+    return Response.json({ error: err?.message || "Unknown server error" }, { status: 500 });
   }
 }
